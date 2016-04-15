@@ -55,22 +55,20 @@ namespace TodoListWebApp.DAL
         {
             if (Cache == null)
             {
-                // first time access
+                // first time access               
                 Cache = db.PerUserCacheList.FirstOrDefault(c => c.webUserUniqueId == User);
             }
             else
             {   // retrieve last write from the DB
-                var status = from e in db.PerUserCacheList
-                             where (e.webUserUniqueId == User)
-                             select new
-                             {
-                                 LastWrite = e.LastWrite
-                             };
+                var dbCache = from e in db.PerUserCacheList
+                              where (e.webUserUniqueId == User)
+                              orderby e.LastWrite descending
+                              select e;
                 // if the in-memory copy is older than the persistent copy
-                if (status.First().LastWrite > Cache.LastWrite)
+                if (dbCache.First().LastWrite > Cache.LastWrite)
                 //// read from from storage, update in-memory copy
                 {
-                    Cache = db.PerUserCacheList.FirstOrDefault(c => c.webUserUniqueId == User);
+                    Cache = dbCache.First();
                 }
             }
             this.Deserialize((Cache == null) ? null : Cache.cacheBits);
