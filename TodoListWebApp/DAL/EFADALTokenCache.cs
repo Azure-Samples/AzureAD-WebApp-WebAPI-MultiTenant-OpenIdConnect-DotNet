@@ -40,11 +40,11 @@ namespace TodoListWebApp.DAL
             this.Deserialize((Cache == null) ? null : Cache.cacheBits);
         }
 
-        // clean up the DB
+        // clean up the DB for current user
         public override void Clear()
         {
             base.Clear();
-            foreach (var cacheEntry in db.PerUserCacheList)
+            foreach (var cacheEntry in db.PerUserCacheList.Where(c => c.webUserUniqueId == user))
                 db.PerUserCacheList.Remove(cacheEntry);
             db.SaveChanges();
         }
@@ -82,12 +82,17 @@ namespace TodoListWebApp.DAL
             // if state changed
             if (this.HasStateChanged)
             {
+                int existingEntryId = 0;
+                if (Cache != null)
+                    existingEntryId = Cache.EntryId;
                 Cache = new PerWebUserCache
                 {
                     webUserUniqueId = User,
                     cacheBits = this.Serialize(),
                     LastWrite = DateTime.Now
                 };
+                if (existingEntryId > 0) // preserve existing EntryId to avoid duplicate Cache items
+                    Cache.EntryId = existingEntryId;
                 //// update the DB and the lastwrite                
                 db.Entry(Cache).State = Cache.EntryId == 0 ? EntityState.Added : EntityState.Modified;                
                 db.SaveChanges();
