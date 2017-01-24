@@ -51,6 +51,10 @@ namespace TodoListWebApp
                             ClientCredential credential = new ClientCredential(clientId, appKey);
                             string tenantID = context.AuthenticationTicket.Identity.FindFirst("http://schemas.microsoft.com/identity/claims/tenantid").Value;
                             string signedInUserID = context.AuthenticationTicket.Identity.FindFirst(ClaimTypes.NameIdentifier).Value;
+                            // Remember that some Cloud based reverse proxies will change https to http on your context.Request.Scheme
+                            //    Add substitution or replace("http://","https://") to context.Properties.RedirectUri
+                            //    if this applies to your hosting situation. This secondary http to https fix is needed
+                            //    for form-post then redirect OAuth authentication methods
 
                             AuthenticationContext authContext = new AuthenticationContext(string.Format("https://login.microsoftonline.com/{0}", tenantID), new EFADALTokenCache(signedInUserID));
                             AuthenticationResult result = await authContext.AcquireTokenByAuthorizationCodeAsync(
@@ -62,6 +66,9 @@ namespace TodoListWebApp
                             // this allows you to deploy your app (to Azure Web Sites, for example)without having to change settings
                             // Remember that the base URL of the address used here must be provisioned in Azure AD beforehand.
                             string appBaseUrl = context.Request.Scheme + "://" + context.Request.Host + context.Request.PathBase;
+                            // Remember that some Cloud based reverse proxies will change https to http on your context.Request.Scheme
+                            //    Add substitution or replace("http://","https://") to context.ProtocolMessage.RedirectUri
+                            //    if this applies to your hosting situation
                             context.ProtocolMessage.RedirectUri = appBaseUrl + "/";
                             context.ProtocolMessage.PostLogoutRedirectUri = appBaseUrl;
                             return Task.FromResult(0);
