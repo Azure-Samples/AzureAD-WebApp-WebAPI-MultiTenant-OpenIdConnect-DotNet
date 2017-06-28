@@ -82,12 +82,21 @@ namespace TodoListWebApp.DAL
             // if state changed
             if (this.HasStateChanged)
             {
-                Cache = new PerWebUserCache
+                if (cache != null)
                 {
-                    webUserUniqueId = User,
-                    cacheBits = this.Serialize(),
-                    LastWrite = DateTime.Now
-                };
+                    cache.CacheBits = this.Serialize();
+                    cache.LastWrite = DateTime.Now;
+                }
+                else
+                {
+                    cache = new PerWebUserCache
+                    {
+                        WebUserUniqueId = user,
+                        CacheBits = this.Serialize(),
+                        LastWrite = DateTime.Now
+                    };
+                }
+                
                 //// update the DB and the lastwrite                
                 db.Entry(Cache).State = Cache.EntryId == 0 ? EntityState.Added : EntityState.Modified;                
                 db.SaveChanges();
